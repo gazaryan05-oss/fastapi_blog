@@ -51,7 +51,9 @@
 
                         <!-- Показать, когда залогинен -->
                         <div id="loggedInNav" class="d-none">
-                            <a class="btn btn-light mb-2 mb-md-0 me-md-3" href="{{ url_for('account') }}"
+                            <button class="btn btn-outline-light mb-2 mb-md-0 me-md-2" type="button"
+                                data-bs-toggle="modal" data-bs-target="#createPostModal">New Post</button>
+                            <a class="btn btn-light mb-2 mb-md-0 me-md-3" href="{{ url_for('account_page') }}"
                                 id="accountBtn">Account</a>
                         </div>
 
@@ -233,19 +235,18 @@
     <!-- Create Post Form Handler -->
     <script type="module">
         import { getErrorMessage, hideModal, showModal } from "/static/js/utils.js";
-        // import { getToken } from '/static/js/auth.js';  ← отключено временно
+        import { getToken } from '/static/js/auth.js';
 
         const createForm = document.getElementById("createPostForm");
 
         createForm.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            // Токен пока не проверяем — авторизация не настроена
-            // const token = getToken();
-            // if (!token) {
-            //     window.location.href = '/login';
-            //     return;
-            // }
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
 
             const formData = new FormData(createForm);
             const postData = Object.fromEntries(formData.entries());
@@ -255,10 +256,15 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        // 'Authorization': `Bearer ${token}`,  ← отключено
+                        'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify(postData),
                 });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
 
                 if (response.ok) {
                     const data = await response.json();
