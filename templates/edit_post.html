@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-section py-3 px-4">
+    <h1>Edit Post</h1>
+    <form method="POST" action="/posts/{{ post.id }}/edit">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ post.title }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">Content</label>
+            <textarea class="form-control" id="content" name="content" rows="5" required>{{ post.content }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{{ url_for('post_page', post_id=post.id) }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock content %}
