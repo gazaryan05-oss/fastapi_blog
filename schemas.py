@@ -57,7 +57,7 @@ class PostResponse(PostBase):
     date_posted: datetime
     author: UserPublic
 
-#schemas.py
+
 
 class PaginatedPostsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
