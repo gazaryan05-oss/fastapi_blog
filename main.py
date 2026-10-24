@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
+from unittest import skip
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.exception_handlers import (
@@ -21,6 +22,7 @@ import models
 from database import Base, engine, get_db
 from routers import post, users
 from config import settings
+from database import engine, get_db
 
 # ============================================================
 # LIFESPAN / SETUP
@@ -28,10 +30,6 @@ from config import settings
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield
 
     # Shutdown
@@ -64,7 +62,8 @@ app.mount(
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
-async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
+async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)], skip: Annotated[int, Query(ge=0)] = 0,  # <-- ДОБАВИТЬ
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page):
     count_result = await db.execute(select(func.count()).select_from(models.Post))
     total = count_result.scalar() or 0
 
@@ -72,7 +71,8 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
         select(models.Post)
         .options(selectinload(models.Post.author))
         .order_by(models.Post.date_posted.desc())
-        .limit(settings.posts_per_page),
+        .limit(limit)
+        .offset(skip),
     )
     posts = result.scalars().all()
 
@@ -84,8 +84,9 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
         {
             "posts": posts,
             "title": "Home",
-            "limit": settings.posts_per_page,
-            "has_more": has_more,
+            "skip": skip,           # <-- добавь
+            "limit": limit,         # <-- добавь
+            "has_more": has_more,   # <-- добавь
         },
     )
 

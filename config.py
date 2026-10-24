@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     posts_per_page: int = 10
     max_upload_size_bytes: int = 5 * 1024 * 1024
 
-    # 👇 ДОБАВЬ ВОТ ЭТОТ БЛОК:
+    database_url: str
+    
     mail_server: str = "localhost"
     mail_port: int = 1025
     mail_username: str = ""
