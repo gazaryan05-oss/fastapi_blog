@@ -34,6 +34,8 @@ from email_utils import send_password_reset_email
 from image_utils import (
     delete_profile_image,
     process_profile_image,
+    upload_profile_image,
+    save_profile_image_locally
 )
 from schemas import (
     ChangePasswordRequest,
@@ -47,6 +49,10 @@ from schemas import (
     UserPublic,
     UserUpdate,
 )
+
+
+from botocore.exceptions import BotoCoreError, ClientError
+
 
 router = APIRouter()
 
@@ -350,28 +356,33 @@ async def update_user(
     return current_user
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(
+@router.delete("/{user_id}/picture", response_model=UserPrivate)
+async def delete_user_picture(
     user_id: int,
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    if user_id != current_user.id:
+    if current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this user",
+            detail="Not authorized to delete this user's picture",
         )
 
-    result = await db.execute(select(models.User).where(models.User.id == user_id))
-    user = result.scalars().first()
-    if not user:
+    old_filename = current_user.image_file
+
+    if old_filename is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No profile picture to delete",
         )
 
-    await db.delete(user)
+    current_user.image_file = None
     await db.commit()
+    await db.refresh(current_user)
+
+    await delete_profile_image(old_filename)
+
+    return current_user
 
 @router.get("/{user_id}/posts", response_model=PaginatedPostsResponse)
 async def get_user_posts(
@@ -440,19 +451,36 @@ async def upload_profile_picture(
         )
 
     try:
-        new_filename = await run_in_threadpool(process_profile_image, content)
+        processed_bytes, new_filename = await run_in_threadpool(
+            process_profile_image,
+            content,
+        )
     except UnidentifiedImageError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
         ) from err
 
+    # Upload to S3 (also runs in threadpool via async wrapper)
+    # Сохраняем файл локально на сервер
+     # Upload profile picture to S3
+    try:
+        await upload_profile_image(processed_bytes, new_filename)
+    except (BotoCoreError, ClientError) as err:
+        print(f"S3 upload error: {type(err).__name__}: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload image to S3.",
+        ) from err
+
     old_filename = current_user.image_file
+
     current_user.image_file = new_filename
     await db.commit()
     await db.refresh(current_user)
 
     if old_filename:
-        delete_profile_image(old_filename)
+        await delete_profile_image(old_filename)
 
     return current_user
+

@@ -49,12 +49,6 @@ app.mount(
     name="static",
 )
 
-app.mount(
-    "/media",
-    StaticFiles(directory="media"),
-    name="media",
-)
-
 
 # ============================================================
 # HTML PAGES
@@ -84,9 +78,9 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)], s
         {
             "posts": posts,
             "title": "Home",
-            "skip": skip,           # <-- добавь
-            "limit": limit,         # <-- добавь
-            "has_more": has_more,   # <-- добавь
+            "skip": skip,           
+            "limit": limit,         
+            "has_more": has_more,   
         },
     )
 

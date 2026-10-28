@@ -127,7 +127,12 @@
         // Populate display info
         document.getElementById('displayUsername').textContent = user.username;
         document.getElementById('displayEmail').textContent = user.email;
-        document.getElementById('profileImage').src = user.image_path;
+        const profileImage = document.getElementById('profileImage');
+        profileImage.onerror = () => {
+            profileImage.onerror = null;
+            profileImage.src = '/static/profile_pics/default.jpg';
+        };
+        profileImage.src = user.image_path || '/static/profile_pics/default.jpg';
 
         // Populate form fields
         document.getElementById('username').value = user.username;
@@ -203,7 +208,12 @@
 
                 clearUserCache();
 
-                document.getElementById('profileImage').src = data.image_path;
+                const profileImage = document.getElementById('profileImage');
+                profileImage.onerror = () => {
+                    profileImage.onerror = null;
+                    profileImage.src = '/static/profile_pics/default.jpg';
+                };
+                profileImage.src = data.image_path || '/static/profile_pics/default.jpg';
 
                 pictureInput.value = '';
                 imagePreview.classList.add('d-none');
