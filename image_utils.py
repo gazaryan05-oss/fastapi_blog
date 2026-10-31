@@ -76,6 +76,7 @@ def _upload_to_s3(file_bytes: bytes, key: str) -> None:
     s3.upload_fileobj(
         BytesIO(file_bytes),
         settings.s3_bucket_name,
+        
         key,
         ExtraArgs={"ContentType": "image/jpeg"},
     )
