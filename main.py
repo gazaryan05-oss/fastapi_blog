@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from email.mime import text
 from typing import Annotated
 from unittest import skip
 
@@ -53,6 +54,36 @@ app.mount(
 # ============================================================
 # HTML PAGES
 # ============================================================
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    if "Referrer-Policy" not in response.headers:
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+    if request.url.hostname not in ("localhost", "127.0.0.1"):
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=63072000; includeSubDomains"
+        )
+
+    return response
+
+@app.get("/health")
+async def health_check(db: Annotated[AsyncSession, Depends(get_db)]):
+    try:
+        await db.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
+    return {"status": "healthy"}
+
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
