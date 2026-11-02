@@ -3,8 +3,12 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'fastapi-app'
-        // Прямой путь к бинарнику uv
         UV_BIN = '/Library/Frameworks/Python.framework/Versions/3.11/bin/uv'
+
+        // Переменные окружения для Pydantic Settings при запуске в CI/CD
+        SECRET_KEY = 'test_secret_key_for_jenkins_ci'
+        S3_BUCKET_NAME = 'test-s3-bucket'
+        DATABASE_URL = 'postgresql+psycopg://bloguser:password@localhost:5432/test_blog'
     }
 
     stages {
@@ -16,17 +20,15 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo 'Syncing dependencies with UV...'
-                sh '${UV_BIN} sync'
+                echo 'Syncing all dependencies with UV...'
+                sh '${UV_BIN} sync --all-groups'
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Running migrations and pytest...'
-                // Применяем миграции к тестовой базе данных
+                echo 'Running migrations and Pytest...'
                 sh '${UV_BIN} run alembic upgrade head'
-                // Запускаем тесты
                 sh '${UV_BIN} run pytest'
             }
         }
