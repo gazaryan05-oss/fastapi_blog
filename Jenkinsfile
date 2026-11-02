@@ -3,9 +3,12 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'fastapi-app'
+        
+        // Прямые пути к бинарникам
         UV_BIN = '/Library/Frameworks/Python.framework/Versions/3.11/bin/uv'
+        DOCKER_BIN = '/usr/local/bin/docker'
 
-        // Переменные окружения для Pydantic Settings при запуске в CI/CD
+        // Переменные окружения для Pydantic Settings
         SECRET_KEY = 'test_secret_key_for_jenkins_ci'
         S3_BUCKET_NAME = 'test-s3-bucket'
         DATABASE_URL = 'postgresql+psycopg://bloguser:password@localhost:5432/test_blog'
@@ -36,7 +39,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t ${IMAGE_NAME}:latest .'
+                // Вызываем docker по прямому пути
+                sh '${DOCKER_BIN} build -t ${IMAGE_NAME}:latest .'
             }
         }
     }
