@@ -21,7 +21,7 @@ pipeline {
             }
         }
 
-s       tage('Run Tests') {
+        stage('Run Tests') {
             steps {
                 echo 'Running migrations and pytest...'
                 // Применяем миграции к тестовой базе данных
