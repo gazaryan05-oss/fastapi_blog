@@ -21,9 +21,12 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+s       tage('Run Tests') {
             steps {
-                echo 'Running Pytest...'
+                echo 'Running migrations and pytest...'
+                // Применяем миграции к тестовой базе данных
+                sh '${UV_BIN} run alembic upgrade head'
+                // Запускаем тесты
                 sh '${UV_BIN} run pytest'
             }
         }
