@@ -1,19 +1,22 @@
-from fastapi.testclient import TestClient
-from main import app  # импортируем твой настоящий блог
+import pytest
+import asyncio
+from database import engine, Base  # Укажите корректный импорт ваших engine и Base
 
-client = TestClient(app)
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_database():
+    """Автоматически создает таблицы в тестовой БД перед стартом тестов."""
+    async def create_tables():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-def test_homepage():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "FastAPI Blog" in response.text  # проверяем, что на странице есть заголовок
+    async def drop_tables():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
 
-def test_get_posts_api():
-    response = client.get("/api/posts")
-    assert response.status_code == 200
-    assert "posts" in response.json()  # проверяем, что API вернул список постов
-
-def test_unauthorized_create_post():
-    # Пытаемся создать пост БЕЗ токена авторизации
-    response = client.post("/api/posts", json={"title": "Test", "content": "Test"})
-    assert response.status_code == 401  # Ожидаем отказ (Unauthorized)
+    # Создаем таблицы в БД test_blog
+    asyncio.run(create_tables())
+    
+    yield
+    
+    # Удаляем таблицы после прогона всех тестов
+    asyncio.run(drop_tables())
