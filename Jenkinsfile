@@ -3,10 +3,11 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'fastapi-app'
-        
-        // Прямые пути к бинарникам
+
+        // Расширяем PATH для всех команд и дочерних процессов Docker/UV
+        PATH = "/usr/local/bin:/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:${env.PATH}"
+
         UV_BIN = '/Library/Frameworks/Python.framework/Versions/3.11/bin/uv'
-        DOCKER_BIN = '/usr/local/bin/docker'
 
         // Переменные окружения для Pydantic Settings
         SECRET_KEY = 'test_secret_key_for_jenkins_ci'
@@ -39,8 +40,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                // Вызываем docker по прямому пути
-                sh '${DOCKER_BIN} build -t ${IMAGE_NAME}:latest .'
+                sh 'docker build -t ${IMAGE_NAME}:latest .'
             }
         }
     }
