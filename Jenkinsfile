@@ -3,29 +3,34 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'fastapi-app'
+        // Прямой путь к бинарнику uv
+        UV_BIN = '/Library/Frameworks/Python.framework/Versions/3.11/bin/uv'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                echo 'Source code fetched successfully'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'uv sync'
+                echo 'Syncing dependencies with UV...'
+                sh '${UV_BIN} sync'
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'uv run pytest'
+                echo 'Running Pytest...'
+                sh '${UV_BIN} run pytest'
             }
         }
 
         stage('Build Docker Image') {
             steps {
+                echo 'Building Docker image...'
                 sh 'docker build -t ${IMAGE_NAME}:latest .'
             }
         }
