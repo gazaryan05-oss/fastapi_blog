@@ -35,7 +35,6 @@ from image_utils import (
     delete_profile_image,
     process_profile_image,
     upload_profile_image,
-    save_profile_image_locally
 )
 from schemas import (
     ChangePasswordRequest,

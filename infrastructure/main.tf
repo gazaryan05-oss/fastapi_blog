@@ -16,7 +16,7 @@ module "security_group" {
 module "jenkins" {
   source                    = "./modules/jenkins"
   ami_id                    = var.ec2_ami_id
-  instance_type             = "t3.micro"
+  instance_type             = "t3.small"
   tag_name                  = "Vika-Jenkins-Server"
   public_key                = var.public_key
   subnet_id                 = module.networking.public_subnets[0]

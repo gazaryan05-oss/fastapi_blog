@@ -7,7 +7,17 @@ from PIL import Image, ImageOps
 
 from config import settings
 
+from pathlib import Path
 
+PROFILE_PICS_DIR = Path("media/profile_pics")
+
+def save_profile_image_locally(file_bytes: bytes, filename: str) -> None:
+    """Сохраняет файл локально."""
+    PROFILE_PICS_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = PROFILE_PICS_DIR / filename
+    with open(filepath, "wb") as f:
+        f.write(file_bytes)
+        
 def process_profile_image(content: bytes) -> tuple[bytes, str]:
     """
     Принимает байты изображения, сжимает до 300x300,
