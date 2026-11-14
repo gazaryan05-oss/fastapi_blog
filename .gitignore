@@ -11,3 +11,11 @@ blog.db
 .venv
 .env
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+
+# Mac
+.DS_Store

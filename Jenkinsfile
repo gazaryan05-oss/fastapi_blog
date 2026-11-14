@@ -2,38 +2,28 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'fastapi-app'
-
-        // Расширяем PATH для всех команд и дочерних процессов Docker/UV
-        PATH = "/usr/local/bin:/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:${env.PATH}"
-
-        UV_BIN = '/Library/Frameworks/Python.framework/Versions/3.11/bin/uv'
-
-        // Переменные окружения для Pydantic Settings
-        SECRET_KEY = 'test_secret_key_for_jenkins_ci'
+        // Твой ник на Docker Hub
+        IMAGE_NAME = 'victoriagazaryan/fastapi-blog'
+        
+        // Переменные для тестов (фейковые, чтобы тесты не стучались в реальную БД)
+        SECRET_KEY = 'test_secret_key_for_jenkins'
         S3_BUCKET_NAME = 'test-s3-bucket'
         DATABASE_URL = 'postgresql+psycopg://bloguser:password@localhost:5432/test_blog'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Source code fetched successfully'
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                echo 'Syncing all dependencies with UV...'
-                sh '${UV_BIN} sync --all-groups'
+                echo 'Installing uv and syncing dependencies...'
+                sh 'curl -LsSf https://astral.sh/uv/install.sh | sh'
+                sh 'export PATH="$HOME/.cargo/bin:$PATH" && uv sync --all-groups'
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Running migrations and Pytest...'
-                sh '${UV_BIN} run alembic upgrade head'
-                sh '${UV_BIN} run pytest'
+                echo 'Running Pytest...'
+                sh 'export PATH="$HOME/.cargo/bin:$PATH" && uv run pytest'
             }
         }
 
@@ -44,16 +34,13 @@ pipeline {
             }
         }
     }
-
+    
     post {
-        always {
-            echo 'Pipeline finished!'
-        }
         success {
-            echo 'Build succeeded!'
+            echo 'Pipeline succeeded!'
         }
         failure {
-            echo 'Build failed! Check console logs.'
+            echo 'Pipeline failed! Check logs.'
         }
     }
 }
